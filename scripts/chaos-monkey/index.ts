@@ -126,10 +126,10 @@ const SERVICES: readonly ServiceConfig[] = [
         to: '"../../../../db/broken.db"',
       },
       {
-        description: "Health reports degraded — health poller marks service-c as down even though POST /time still works",
+        description: "Health returns 503/degraded — health poller marks service-c down, but POST /time still works",
         file: "services/service-c/src/app.ts",
-        from: '{ status: "ok" }',
-        to: '{ status: "degraded" }',
+        from: 'const response: HealthResponse = { status: "ok" };',
+        to: 'const response: HealthResponse = { status: "degraded" };',
       },
     ],
   },

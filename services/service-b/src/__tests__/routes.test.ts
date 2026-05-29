@@ -25,6 +25,45 @@ describe("GET /health", () => {
     expect(res.body).toEqual({ status: "degraded" });
   });
 
+  it("counts service-a non-2xx as a failure", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValue({
+      ok: false,
+      status: 503,
+    } as unknown as Response);
+
+    await poll();
+    await poll();
+    await poll();
+
+    const res = await request(app).get("/health");
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ status: "degraded" });
+  });
+
+  it("counts service-c non-2xx as a failure", async () => {
+    const serviceAOk = {
+      ok: true,
+      json: () => Promise.resolve({ utc: new Date().toISOString() }),
+    } as unknown as Response;
+    const serviceCFail = { ok: false, status: 404 } as unknown as Response;
+
+    jest.spyOn(global, "fetch")
+      .mockResolvedValueOnce(serviceAOk)
+      .mockResolvedValueOnce(serviceCFail)
+      .mockResolvedValueOnce(serviceAOk)
+      .mockResolvedValueOnce(serviceCFail)
+      .mockResolvedValueOnce(serviceAOk)
+      .mockResolvedValueOnce(serviceCFail);
+
+    await poll();
+    await poll();
+    await poll();
+
+    const res = await request(app).get("/health");
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ status: "degraded" });
+  });
+
   it("recovers to ok after a successful poll", async () => {
     jest.spyOn(global, "fetch").mockRejectedValue(new Error("connection refused"));
     await poll();

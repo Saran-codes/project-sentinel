@@ -16,8 +16,22 @@ afterEach(() => {
 describe("GET /health", () => {
   it("returns 200 with status ok", async () => {
     const res = await request(app).get("/health");
-    expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "ok" });
+    // HTTP status must match body status: "ok" → 200
+    expect(res.status).toBe(200);
+  });
+
+  // TODO: add a test for "returns 503 when health is degraded" once service-c
+  // grows a degraded-state mechanism (e.g. a consecutiveFailures counter like
+  // service-b). At that point, trigger the degraded state, call GET /health, and
+  // assert res.status === 503 and res.body.status === "degraded".
+  // Contract: status === "ok" → HTTP 200; status === "degraded" → HTTP 503.
+});
+
+describe("unknown routes", () => {
+  it("returns 404 for unknown routes", async () => {
+    const res = await request(app).get("/tiime");
+    expect(res.status).toBe(404);
   });
 });
 
