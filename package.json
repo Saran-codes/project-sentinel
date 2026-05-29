@@ -15,6 +15,7 @@
     "dev:a": "npm run dev --workspace=services/service-a",
     "dev:b": "npm run dev --workspace=services/service-b",
     "dev:c": "npm run dev --workspace=services/service-c",
-    "dev:poller": "npm run dev --workspace=health-poller"
+    "dev:poller": "npm run dev --workspace=health-poller",
+    "chaos": "tsx scripts/chaos-monkey/index.ts"
   }
 }
