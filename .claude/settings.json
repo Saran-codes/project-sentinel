@@ -2,11 +2,10 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash(*git commit*)",
         "hooks": [
           {
             "type": "command",
-            "if": "Bash(*git commit*)",
             "command": "cd \"/Users/jaladisaran/Documents/College documents/CP/Projects/project_sentinel\" && npm test --workspaces --if-present",
             "timeout": 120,
             "statusMessage": "Running tests before commit..."
