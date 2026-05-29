@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -145,6 +146,8 @@ function pickOneOrTwo<T>(arr: readonly T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5).slice(0, count);
 }
 
+const appliedDescriptions: string[] = [];
+
 function applyMutation(mutation: Mutation): void {
   const filePath = path.join(ROOT, mutation.file);
   const content = fs.readFileSync(filePath, "utf-8");
@@ -157,6 +160,7 @@ function applyMutation(mutation: Mutation): void {
   fs.writeFileSync(filePath, mutated, "utf-8");
   console.log(`[mutated] ${mutation.description}`);
   console.log(`          ${mutation.file}`);
+  appliedDescriptions.push(mutation.description);
 }
 
 const targets = pickRandomSubset(SERVICES);
@@ -172,4 +176,18 @@ for (const svc of targets) {
   console.log("");
 }
 
-console.log("To revert: git restore services/\n");
+if (appliedDescriptions.length === 0) {
+  console.log("No mutations applied — nothing to commit.\n");
+} else {
+  const body = appliedDescriptions.map((d) => `- ${d}`).join("\n");
+  const message = `chore(chaos): inject ${appliedDescriptions.length} mutation(s)\n\n${body}`;
+  try {
+    execSync("git add services/", { cwd: ROOT, stdio: "inherit" });
+    execSync(`git commit -m ${JSON.stringify(message)}`, { cwd: ROOT, stdio: "inherit" });
+    execSync("git push", { cwd: ROOT, stdio: "inherit" });
+    console.log("\n[chaos] Mutations committed and pushed.\n");
+  } catch (err) {
+    console.error("[chaos] Git operation failed:", err);
+    process.exit(1);
+  }
+}

@@ -43,7 +43,18 @@ Also in parallel, draft the full incident report (for step 5) while subagents wo
 
 ### 5. Resolution
 Once both subagents complete:
-- Mark the incident resolved in the DB.
+- **Verify recovery via DB before closing** — query `health_checks` for the latest row per affected service and confirm `status = 'ok'`. Do not mark resolved until the health poller confirms healthy.
+
+```sql
+SELECT service, status, checked_at
+FROM health_checks
+WHERE (service, checked_at) IN (
+  SELECT service, MAX(checked_at) FROM health_checks GROUP BY service
+)
+AND service IN ('<service-1>', '<service-2>');
+```
+
+- Mark the incident resolved in the DB only after the health check confirms `ok`.
 
 ```sql
 UPDATE incidents SET status = 'resolved', resolved_at = datetime('now') WHERE id = <id>;
@@ -68,6 +79,7 @@ QA:          <test(s) added>
 - Commit the fix and the log entry together:
   - Stage only the changed service files, new/modified test files, and `docs/incident-history.log`.
   - Commit message format: `fix(<service>): <short description>` with a body summarising root cause and resolution.
+- **Push to remote immediately after the commit** — run `git push` so the fix is not left only on the local branch.
 
 ---
 
