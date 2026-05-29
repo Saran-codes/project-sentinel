@@ -4,11 +4,16 @@ import type { ConvertedTime } from "../types";
 
 const DB_PATH = path.resolve(__dirname, "../../../../db/sentinel.db");
 
-let db: DatabaseSync | null = null;
+type DbContext = {
+  db: DatabaseSync;
+  insertStmt: ReturnType<InstanceType<typeof DatabaseSync>["prepare"]>;
+};
 
-function getDb(): DatabaseSync {
-  if (!db) {
-    db = new DatabaseSync(DB_PATH);
+let ctx: DbContext | null = null;
+
+function getCtx(): DbContext {
+  if (!ctx) {
+    const db = new DatabaseSync(DB_PATH);
     db.exec("PRAGMA journal_mode = WAL");
     db.exec(`
       CREATE TABLE IF NOT EXISTS time_records (
@@ -21,14 +26,14 @@ function getDb(): DatabaseSync {
         created_at  TEXT NOT NULL DEFAULT (datetime('now'))
       )
     `);
+    ctx = { db, insertStmt: db.prepare(`
+      INSERT INTO time_records (utc, us_eastern, us_central, us_mountain, us_pacific)
+      VALUES (:utc, :us_eastern, :us_central, :us_mountain, :us_pacific)
+    `) };
   }
-  return db;
+  return ctx;
 }
 
 export function insertTimeRecord(record: ConvertedTime): void {
-  const stmt = getDb().prepare(`
-    INSERT INTO time_records (utc, us_eastern, us_central, us_mountain, us_pacific)
-    VALUES (:utc, :us_eastern, :us_central, :us_mountain, :us_pacific)
-  `);
-  stmt.run(record as unknown as Record<string, string>);
+  getCtx().insertStmt.run(record as unknown as Record<string, string>);
 }
