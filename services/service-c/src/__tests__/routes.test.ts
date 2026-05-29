@@ -21,6 +21,14 @@ describe("GET /health", () => {
     expect(res.status).toBe(200);
   });
 
+  // Regression guard: health endpoint must never be hardcoded to "degraded".
+  // This catches a mutation where the handler always returns { status: "degraded" } / 503.
+  it("returns status ok (not degraded) on a cold start — regression for hardcoded-degraded bug", async () => {
+    const res = await request(app).get("/health");
+    expect(res.status).not.toBe(503);
+    expect(res.body.status).not.toBe("degraded");
+  });
+
   // TODO: add a test for "returns 503 when health is degraded" once service-c
   // grows a degraded-state mechanism (e.g. a consecutiveFailures counter like
   // service-b). At that point, trigger the degraded state, call GET /health, and

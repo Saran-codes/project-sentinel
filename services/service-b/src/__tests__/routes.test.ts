@@ -13,6 +13,17 @@ describe("GET /health", () => {
     expect(res.body).toEqual({ status: "ok" });
   });
 
+  it("stays ok with 2 consecutive failures (threshold boundary — regression for FAILURE_THRESHOLD=0 bug)", async () => {
+    jest.spyOn(global, "fetch").mockRejectedValue(new Error("connection refused"));
+
+    await poll();
+    await poll();
+
+    const res = await request(app).get("/health");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: "ok" });
+  });
+
   it("returns 503 after 3 consecutive poll failures", async () => {
     jest.spyOn(global, "fetch").mockRejectedValue(new Error("connection refused"));
 

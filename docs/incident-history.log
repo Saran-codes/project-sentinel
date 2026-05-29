@@ -1,0 +1,31 @@
+---
+ID:          5
+Service:     service-b
+Severity:    P1
+Opened:      2026-05-29 16:27:58
+Resolved:    2026-05-29 16:36:24
+Title:       service-b degraded: FAILURE_THRESHOLD set to 0 (chaos mutation)
+Report:      Root cause: uncommitted change in services/service-b/src/app.ts set FAILURE_THRESHOLD = 0 (was 3). The health check condition "consecutiveFailures >= FAILURE_THRESHOLD" evaluated true immediately (0 >= 0), so service-b always returned 503/degraded regardless of actual poll results. Compounded by persistent "RangeError: Invalid time value" failures in poll() caused by service-a's broken /time route (see incident #7).
+Fix:         Restored const FAILURE_THRESHOLD = 3 in services/service-b/src/app.ts line 7.
+QA:          Added regression test in services/service-b/src/__tests__/routes.test.ts: "stays ok with 2 consecutive failures (threshold boundary — regression for FAILURE_THRESHOLD=0 bug)" — asserts GET /health returns 200 + { status: "ok" } when consecutiveFailures < 3, directly catching any future FAILURE_THRESHOLD=0 mutation.
+---
+ID:          6
+Service:     service-c
+Severity:    P1
+Opened:      2026-05-29 16:29:26
+Resolved:    2026-05-29 16:36:24
+Title:       service-c degraded: health endpoint hardcoded to "degraded" (chaos mutation)
+Report:      Root cause: uncommitted change in services/service-c/src/app.ts hardcoded { status: "degraded" } in the GET /health handler (was "ok"). service-c has no internal failure counter — its health is entirely determined by this literal value. The hardcoded degraded status caused the health-poller to permanently flag it as unhealthy. The POST /time handler was otherwise functional throughout.
+Fix:         Restored const response: HealthResponse = { status: "ok" } in services/service-c/src/app.ts line 9.
+QA:          Added regression test in services/service-c/src/__tests__/routes.test.ts: "returns status ok (not degraded) on a cold start — regression for hardcoded-degraded bug" — explicitly asserts GET /health does not return 503 or body { status: "degraded" } on a fresh app start.
+---
+ID:          7
+Service:     service-a
+Severity:    P1
+Opened:      2026-05-29 16:36:12
+Resolved:    2026-05-29 16:36:24
+Title:       service-a silent mutations: /time returns empty body + health hardcoded degraded
+Report:      Two uncommitted mutations in service-a caused the upstream pipeline failure. (1) services/service-a/src/routes/time.ts line 8 changed from res.json(response) to res.json({}) — service-b received an empty body on every poll, parsed undefined as the UTC field, and new Date(undefined) threw "RangeError: Invalid time value" on every poll tick, driving service-b's consecutiveFailures counter up. (2) services/service-a/src/app.ts line 9 hardcoded health response to { status: "degraded" }. Health poller showed service-a as ok at 16:27:38 (last recorded check predated the mutation taking effect) — the broken /time route was a silent poison to the pipeline rather than a visible health failure.
+Fix:         Restored res.json(response) in services/service-a/src/routes/time.ts line 8. Restored { status: "ok" } in services/service-a/src/app.ts line 9.
+QA:          Covered by existing service-a test suite (2/2 pass). No new tests required — existing GET /time and GET /health tests validate both fixes.
+---
