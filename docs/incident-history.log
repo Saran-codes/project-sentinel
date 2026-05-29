@@ -29,3 +29,13 @@ Report:      Two uncommitted mutations in service-a caused the upstream pipeline
 Fix:         Restored res.json(response) in services/service-a/src/routes/time.ts line 8. Restored { status: "ok" } in services/service-a/src/app.ts line 9.
 QA:          Covered by existing service-a test suite (2/2 pass). No new tests required — existing GET /time and GET /health tests validate both fixes.
 ---
+ID:          8
+Service:     service-a
+Severity:    P1
+Opened:      2026-05-29 17:01:31
+Resolved:    2026-05-29 17:05:21
+Title:       service-a health endpoint chaos mutation: hardcoded degraded + 503
+Report:      Chaos injection commit (6c04926) re-mutated the /health endpoint in services/service-a/src/app.ts. The route handler was changed to always return { status: "degraded" } with HTTP 503, regardless of actual service state. Health poller detected and reported service-a as degraded starting at 16:57:59. Root cause: two simultaneous mutations in the health route handler — status field hardcoded to "degraded" and HTTP response code changed from 200 to 503.
+Fix:         Reverted services/service-a/src/app.ts: restored /health route to return { status: "ok" } with HTTP 200.
+QA:          Existing test in services/service-a/src/__tests__/routes.test.ts validates the fix. Test "GET /health returns 200 with status ok" confirmed passing after fix applied (2/2 tests pass).
+---
