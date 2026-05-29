@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background-color: #060c18;
+  background-image:
+    linear-gradient(rgba(14, 38, 70, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 38, 70, 0.3) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+  color: #dce6f4;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 10% -10%, rgba(0, 120, 255, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 110%, rgba(0, 200, 140, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #162033; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #1e2d45; }
+
+/* ─── Animations ─── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulse-ring-ok {
+  0% { box-shadow: 0 0 0 0 rgba(13, 186, 138, 0.6), 0 0 8px rgba(13, 186, 138, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(13, 186, 138, 0), 0 0 8px rgba(13, 186, 138, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(13, 186, 138, 0), 0 0 8px rgba(13, 186, 138, 0.4); }
+}
+
+@keyframes pulse-ring-critical {
+  0% { box-shadow: 0 0 0 0 rgba(255, 64, 64, 0.7), 0 0 10px rgba(255, 64, 64, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(255, 64, 64, 0), 0 0 10px rgba(255, 64, 64, 0.5); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 64, 64, 0), 0 0 10px rgba(255, 64, 64, 0.5); }
+}
+
+@keyframes pulse-ring-warn {
+  0% { box-shadow: 0 0 0 0 rgba(255, 157, 0, 0.6), 0 0 8px rgba(255, 157, 0, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(255, 157, 0, 0), 0 0 8px rgba(255, 157, 0, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 157, 0, 0), 0 0 8px rgba(255, 157, 0, 0.4); }
+}
+
+@keyframes pulse-ring-info {
+  0% { box-shadow: 0 0 0 0 rgba(38, 137, 255, 0.6), 0 0 8px rgba(38, 137, 255, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(38, 137, 255, 0), 0 0 8px rgba(38, 137, 255, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(38, 137, 255, 0), 0 0 8px rgba(38, 137, 255, 0.4); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Status dots ─── */
+.status-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot--ok {
+  background: #0dba8a;
+  animation: pulse-ring-ok 2.8s ease-out infinite;
+}
+
+.status-dot--critical {
+  background: #ff4040;
+  animation: pulse-ring-critical 0.9s ease-out infinite;
+}
+
+.status-dot--investigating {
+  background: #ff9d00;
+  animation: pulse-ring-warn 2s ease-out infinite;
+}
+
+.status-dot--recovery_in_process {
+  background: #2689ff;
+  animation: pulse-ring-info 2.4s ease-out infinite;
+}
+
+.status-dot--unknown {
+  background: #4a5568;
+  box-shadow: 0 0 6px rgba(74, 85, 104, 0.3);
+}
+
+/* ─── Live indicator ─── */
+.blink {
+  animation: blink 1.4s step-end infinite;
+}
+
+/* ─── Report toggle button ─── */
+.report-toggle {
+  background: none;
+  border: 1px solid #1a2d45;
+  color: #3d5a78;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 3px 9px;
+  border-radius: 3px;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.report-toggle:hover {
+  color: #5a7393;
+  border-color: #1e3050;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.report-toggle.open {
+  color: #5a7393;
+  border-color: #1e3050;
+}
+
+/* ─── Expanded report ─── */
+.report-content {
+  animation: slide-down 0.18s ease-out both;
+}

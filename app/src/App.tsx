@@ -45,96 +45,168 @@ export function App() {
   return (
     <div
       style={{
+        maxWidth: 1100,
+        margin: "0 auto",
+        padding: "44px 48px 80px",
         minHeight: "100vh",
-        background: "#0f172a",
-        color: "#e2e8f0",
-        fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
-        padding: "32px 40px",
-        boxSizing: "border-box",
       }}
     >
-      <header style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 40 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.5 }}>
-          Project Sentinel
-        </h1>
-        <span style={{ color: "#475569", fontSize: 12 }}>
-          {lastUpdated ? `updated ${lastUpdated.toLocaleTimeString()}` : "connecting…"}
-        </span>
-        {error && (
-          <span style={{ color: "#ef4444", fontSize: 12, marginLeft: "auto" }}>
-            ⚠ {error}
+      {/* ─── Header ─── */}
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 56,
+          paddingBottom: 22,
+          borderBottom: "1px solid #0d1e33",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <span
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 800,
+              fontSize: 21,
+              letterSpacing: 4,
+              color: "#c5d5e8",
+              userSelect: "none",
+            }}
+          >
+            SENTINEL
           </span>
-        )}
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span
+              className="blink"
+              style={{
+                display: "inline-block",
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#0dba8a",
+                boxShadow: "0 0 7px #0dba8a",
+              }}
+            />
+            <span
+              style={{
+                color: "#1f8b5e",
+                fontSize: 12,
+                letterSpacing: 2,
+                fontWeight: 600,
+              }}
+            >
+              LIVE
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {error != null && (
+            <span
+              style={{
+                color: "#ff4040",
+                fontSize: 13,
+                background: "#ff404012",
+                border: "1px solid #ff404030",
+                padding: "3px 10px",
+                borderRadius: 3,
+              }}
+            >
+              ⚠ {error}
+            </span>
+          )}
+          <span style={{ color: "#4d6885", fontSize: 13 }}>
+            {lastUpdated != null
+              ? `↻ ${lastUpdated.toLocaleTimeString()}`
+              : "connecting…"}
+          </span>
+        </div>
       </header>
 
-      <section style={{ marginBottom: 48 }}>
-        <SectionHeader label="Service Status" />
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+      {/* ─── Infrastructure ─── */}
+      <section style={{ marginBottom: 56 }}>
+        <SectionLabel label="INFRASTRUCTURE" />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 14,
+            marginTop: 22,
+          }}
+        >
           {services.length === 0 ? (
-            <div style={{ color: "#475569", fontSize: 14 }}>Loading…</div>
+            <div style={{ color: "#4d6885", fontSize: 13 }}>Loading services…</div>
           ) : (
             services.map((svc) => <ServiceCard key={svc.name} service={svc} />)
           )}
         </div>
       </section>
 
-      <section style={{ marginBottom: 48 }}>
-        <SectionHeader
-          label="Active Incidents"
+      {/* ─── Active Incidents ─── */}
+      <section style={{ marginBottom: 56 }}>
+        <SectionLabel
+          label="ACTIVE INCIDENTS"
           count={activeIncidents.length}
-          countColor="#f59e0b"
+          accentColor="#ff9d00"
         />
-        <ActiveIncidents incidents={activeIncidents} />
+        <div style={{ marginTop: 22 }}>
+          <ActiveIncidents incidents={activeIncidents} />
+        </div>
       </section>
 
+      {/* ─── Incident History ─── */}
       <section>
-        <SectionHeader
-          label="Past Incidents"
+        <SectionLabel
+          label="INCIDENT HISTORY"
           count={pastIncidents.length}
-          countColor="#10b981"
+          accentColor="#0dba8a"
         />
-        <PastIncidents incidents={pastIncidents} />
+        <div style={{ marginTop: 22 }}>
+          <PastIncidents incidents={pastIncidents} />
+        </div>
       </section>
     </div>
   );
 }
 
-type SectionHeaderProps = {
+type SectionLabelProps = {
   label: string;
   count?: number;
-  countColor?: string;
+  accentColor?: string;
 };
 
-function SectionHeader({ label, count, countColor }: SectionHeaderProps) {
+function SectionLabel({ label, count, accentColor }: SectionLabelProps) {
+  const accent = accentColor ?? "#3d5270";
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        marginBottom: 16,
-        paddingBottom: 10,
-        borderBottom: "1px solid #1e293b",
-      }}
-    >
-      <span style={{ color: "#64748b", fontSize: 11, fontWeight: 700, letterSpacing: 1.5 }}>
-        {label.toUpperCase()}
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <span
+        style={{
+          fontFamily: "'Syne', sans-serif",
+          fontWeight: 700,
+          fontSize: 14,
+          letterSpacing: 3,
+          color: "#5a7393",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
       </span>
       {count !== undefined && (
         <span
           style={{
-            background: `${countColor ?? "#64748b"}22`,
-            border: `1px solid ${countColor ?? "#64748b"}44`,
-            color: countColor ?? "#64748b",
-            fontSize: 11,
-            fontWeight: 700,
-            padding: "1px 7px",
+            fontSize: 12,
+            color: accent,
+            background: `${accent}18`,
+            border: `1px solid ${accent}30`,
+            padding: "1px 8px",
             borderRadius: 10,
+            fontWeight: 600,
           }}
         >
           {count}
         </span>
       )}
+      <div style={{ flex: 1, height: 1, background: "#0d1e33" }} />
     </div>
   );
 }

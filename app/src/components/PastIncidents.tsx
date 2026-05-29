@@ -1,17 +1,147 @@
+import { useState } from "react";
 import type { Incident } from "../types";
 
 const SEVERITY_COLOR: Record<string, string> = {
-  P1: "#ef4444",
-  P2: "#f59e0b",
-  P3: "#3b82f6",
+  P1: "#ff4040",
+  P2: "#ff9d00",
+  P3: "#2689ff",
 };
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString();
+function sc(severity: string): string {
+  return SEVERITY_COLOR[severity] ?? "#4a5568";
 }
 
-function severityColor(s: string): string {
-  return SEVERITY_COLOR[s] ?? "#6b7280";
+function parseUtc(iso: string): Date {
+  return new Date(iso.replace(" ", "T") + "Z");
+}
+
+function formatDate(iso: string): string {
+  return parseUtc(iso).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function duration(start: string, end: string): string {
+  const mins = Math.round(
+    (parseUtc(end).getTime() - parseUtc(start).getTime()) / 60000,
+  );
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function PastIncidentRow({ incident }: { incident: Incident }) {
+  const [expanded, setExpanded] = useState(false);
+  const color = sc(incident.severity);
+
+  return (
+    <div
+      style={{
+        borderBottom: "1px solid #0a1828",
+        padding: "14px 4px",
+      }}
+    >
+      {/* Main row */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ color: "#0dba8a", fontSize: 14, flexShrink: 0 }}>✓</span>
+
+        <span
+          style={{
+            color,
+            background: `${color}10`,
+            border: `1px solid ${color}28`,
+            fontSize: 13,
+            fontWeight: 700,
+            padding: "1px 6px",
+            borderRadius: 3,
+            letterSpacing: 0.8,
+            flexShrink: 0,
+            alignSelf: "center",
+          }}
+        >
+          {incident.severity}
+        </span>
+
+        <span style={{ color: "#4d6885", fontSize: 15, flexShrink: 0 }}>
+          {incident.service}
+        </span>
+
+        <span
+          style={{
+            color: "#9ab8d0",
+            fontSize: 16,
+            flex: 1,
+            minWidth: 100,
+          }}
+        >
+          {incident.title}
+        </span>
+
+        <button
+          className={`report-toggle${expanded ? " open" : ""}`}
+          onClick={() => { setExpanded(!expanded); }}
+        >
+          {expanded ? "▲ hide" : "▼ report"}
+        </button>
+      </div>
+
+      {/* Timestamps */}
+      <div
+        style={{
+          color: "#4d6885",
+          fontSize: 15,
+          marginTop: 5,
+          paddingLeft: 22,
+          display: "flex",
+          gap: 6,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        <span>{incident.createdBy}</span>
+        <span>·</span>
+        <span>{formatDate(incident.createdAt)}</span>
+        {incident.resolvedAt !== null && (
+          <>
+            <span>→</span>
+            <span>{formatDate(incident.resolvedAt)}</span>
+            <span style={{ color: "#0dba8a88" }}>
+              ({duration(incident.createdAt, incident.resolvedAt)})
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* Expanded report */}
+      {expanded && (
+        <div
+          className="report-content"
+          style={{
+            marginTop: 12,
+            marginLeft: 22,
+            paddingLeft: 14,
+            borderLeft: "2px solid #0d1e33",
+            color: "#6b8aaa",
+            fontSize: 16,
+            lineHeight: 1.7,
+          }}
+        >
+          {incident.report}
+        </div>
+      )}
+    </div>
+  );
 }
 
 type Props = { incidents: Incident[] };
@@ -19,60 +149,16 @@ type Props = { incidents: Incident[] };
 export function PastIncidents({ incidents }: Props) {
   if (incidents.length === 0) {
     return (
-      <div style={{ color: "#475569", fontSize: 14, fontStyle: "italic" }}>
-        No past incidents.
+      <div style={{ color: "#4d6885", fontSize: 15, fontStyle: "italic" }}>
+        No incident history.
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div>
       {incidents.map((inc) => (
-        <div
-          key={inc.id}
-          style={{
-            background: "#1e293b",
-            border: "1px solid #1e293b",
-            borderLeft: "3px solid #10b981",
-            borderRadius: 8,
-            padding: "14px 18px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-            <span
-              style={{
-                background: `${severityColor(inc.severity)}22`,
-                border: `1px solid ${severityColor(inc.severity)}44`,
-                color: severityColor(inc.severity),
-                fontSize: 11,
-                fontWeight: 700,
-                padding: "2px 8px",
-                borderRadius: 4,
-              }}
-            >
-              {inc.severity}
-            </span>
-            <span style={{ color: "#64748b", fontSize: 12 }}>{inc.service}</span>
-            <span
-              style={{
-                marginLeft: "auto",
-                color: "#10b981",
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: 0.5,
-              }}
-            >
-              RESOLVED
-            </span>
-          </div>
-          <div style={{ color: "#94a3b8", fontWeight: 500, marginBottom: 4 }}>{inc.title}</div>
-          <div style={{ color: "#475569", fontSize: 12 }}>
-            by {inc.createdBy} · Opened {formatDate(inc.createdAt)}
-            {inc.resolvedAt !== null ? (
-              <span> · Resolved {formatDate(inc.resolvedAt)}</span>
-            ) : null}
-          </div>
-        </div>
+        <PastIncidentRow key={inc.id} incident={inc} />
       ))}
     </div>
   );
