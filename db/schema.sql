@@ -14,3 +14,15 @@ CREATE TABLE IF NOT EXISTS health_checks (
   status     TEXT NOT NULL,
   checked_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS incidents (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  service      TEXT NOT NULL,
+  status       TEXT NOT NULL,
+  title        TEXT NOT NULL,
+  report       TEXT NOT NULL,
+  severity     TEXT NOT NULL,
+  created_by   TEXT NOT NULL,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  resolved_at  TEXT
+);
