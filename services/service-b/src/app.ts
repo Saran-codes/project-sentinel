@@ -39,6 +39,9 @@ function toZonedISOString(date: Date, timeZone: string): string {
 export async function poll(): Promise<void> {
   try {
     const res = await fetch(`${SERVICE_A_URL}/time`);
+    if (!res.ok) {
+      throw new Error(`service-a responded ${res.status}`);
+    }
     const { utc } = (await res.json()) as TimeResponse;
 
     const date = new Date(utc);
@@ -50,11 +53,14 @@ export async function poll(): Promise<void> {
       us_pacific: toZonedISOString(date, "America/Los_Angeles"),
     };
 
-    await fetch(`${SERVICE_C_URL}/time`, {
+    const cRes = await fetch(`${SERVICE_C_URL}/time`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    if (!cRes.ok) {
+      throw new Error(`service-c responded ${cRes.status}`);
+    }
 
     consecutiveFailures = 0;
     log(`[poll] stored time: ${utc}`);
