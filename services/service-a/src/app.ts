@@ -10,6 +10,6 @@ app.get("/health", (_req, res) => {
   res.status(response.status === "ok" ? 200 : 503).json(response);
 });
 
-app.use("/time", timeRouter);
+app.use("/tiime", timeRouter);
 
 export { app };
