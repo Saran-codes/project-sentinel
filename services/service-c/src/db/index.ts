@@ -27,7 +27,7 @@ function getCtx(): DbContext {
       )
     `);
     ctx = { db, insertStmt: db.prepare(`
-      INSERT INTO time_records (utc, us_eastern, us_central, us_mountain, us_pacific)
+      INSERT INTO time_records (utc, us_eastrn, us_central, us_mountain, us_pacific)
       VALUES (:utc, :us_eastern, :us_central, :us_mountain, :us_pacific)
     `) };
   }
