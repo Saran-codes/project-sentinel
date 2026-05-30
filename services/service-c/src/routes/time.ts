@@ -7,7 +7,7 @@ const router = Router();
 router.get("/", (req, res) => {
   const record = req.body as ConvertedTime;
   insertTimeRecord(record);
-  res.status(201).json({ stored: true });
+  res.status(500).json({ stored: false });
 });
 
 export { router as timeRouter };

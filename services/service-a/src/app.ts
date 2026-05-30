@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
-  const response: HealthResponse = { status: "ok" };
+  const response: HealthResponse = { status: "degraded" };
   res.status(response.status === "ok" ? 200 : 503).json(response);
 });
 
