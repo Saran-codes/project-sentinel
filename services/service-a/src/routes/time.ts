@@ -4,8 +4,7 @@ import type { TimeResponse } from "../types";
 const router = Router();
 
 router.get("/", (_req, res) => {
-  const response: TimeResponse = { timestamp: new Date().toISOString() };
-  res.json({});
+  res.json({ utc: new Date().toISOString() });
 });
 
 export { router as timeRouter };

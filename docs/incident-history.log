@@ -90,3 +90,33 @@ Report:      service-c health degraded (one unreachable poll at 08:35:08) and in
 Fix:         Reverted src/app.ts, src/routes/time.ts, and src/db/index.ts to a6a44f8: /health returns ok, router mounted at "/time", handler is router.post returning 201 {stored:true}, DB_PATH resolves to db/sentinel.db, and the INSERT column is us_eastern. Removed the stray db/broken.db artifact left by the bad path.
 QA:          npm test --workspace=services/service-c — 5/5 pass, including db-path.test.ts (opens db/sentinel.db, not broken.db) and the routes regression for POST /time returning 201.
 ---
+ID:          14
+Service:     service-a
+Severity:    P1
+Opened:      2026-05-30 08:50:44
+Resolved:    2026-05-30 08:56:11
+Title:       service-a: /health hardcoded degraded, /time route typo and empty response
+Report:      Health poller reported service-a degraded starting 08:50:38. Root cause: three chaos mutations left in place by incomplete prior fixes. (1) src/app.ts:9 hardcoded response status to "degraded" — GET /health always returned 503. (2) src/app.ts:13 timeRouter mounted at "/tiime" instead of "/time" — downstream service-b calls to GET /time received 404. (3) src/routes/time.ts:8 returned res.json({}) instead of res.json(response) — service-b read .utc as undefined and the timezone conversion broke.
+Fix:         (1) service-a/src/app.ts:9 — changed { status: "degraded" } to { status: "ok" }. (2) service-a/src/app.ts:13 — changed "/tiime" to "/time". (3) service-a/src/routes/time.ts:8 — removed unused response variable and changed res.json({}) to res.json({ utc: new Date().toISOString() }).
+QA:          npm test --workspace=services/service-a — 2/2 pass: "GET /health returns 200 with status ok" and "GET /time returns 200 with a valid UTC ISO string". Both fixes validated by existing regression tests.
+---
+ID:          15
+Service:     service-b
+Severity:    P1
+Opened:      2026-05-30 08:50:45
+Resolved:    2026-05-30 08:56:11
+Title:       service-b: wrong service URLs, zero threshold, timezone typo, GET instead of POST, empty body
+Report:      Health poller reported service-b degraded starting 08:50:38 and time_records stopped accumulating (~08:50:38 was the last write). Root cause: six chaos mutations in src/app.ts left from prior incomplete fix commits. (1) SERVICE_A_URL port 3099 instead of 3001 — every fetch to service-a threw ECONNREFUSED. (2) SERVICE_C_URL port 3099 instead of 3003. (3) FAILURE_THRESHOLD=0 instead of 3 — the service was permanently degraded on startup (any count ≥ 0 triggered degraded). (4) Timezone "America/New_Yrok" instead of "America/New_York" — threw RangeError in Intl.DateTimeFormat on every poll. (5) Request to service-c used method GET instead of POST. (6) Request body was JSON.stringify({}) instead of JSON.stringify(payload) — even if service-c accepted the request, it would receive no timestamp data.
+Fix:         (1) service-b/src/app.ts:5 — changed SERVICE_A_URL port from 3099 to 3001. (2) Line 6 — changed SERVICE_C_URL port from 3099 to 3003. (3) Line 7 — changed FAILURE_THRESHOLD from 0 to 3. (4) Line 50 — changed timezone from "America/New_Yrok" to "America/New_York". (5) Line 57 — changed method from "GET" to "POST". (6) Line 59 — changed body from JSON.stringify({}) to JSON.stringify(payload).
+QA:          npm test --workspace=services/service-b — 7/7 pass, including three explicit regressions: "returns 200 with status ok by default" (fails with FAILURE_THRESHOLD=0), "stays ok with 2 consecutive failures (threshold boundary — regression for FAILURE_THRESHOLD=0 bug)" (catches the threshold mutation), and "stays ok after a poll with valid timezone conversion — regression for America/New_Yrok typo bug" (fails if timezone reverts to typo).
+---
+ID:          16
+Service:     service-c
+Severity:    P1
+Opened:      2026-05-30 08:50:45
+Resolved:    2026-05-30 08:56:11
+Title:       service-c: /health hardcoded degraded, /tiime route typo, GET instead of POST, wrong DB path and column typo
+Report:      Health poller reported service-c degraded starting 08:50:38 and time_records writes ceased at ~08:50:38 UTC. Root cause: six chaos mutations left from prior incomplete fix commits. (1) src/app.ts:9 hardcoded response status to "degraded" — GET /health always returned 503. (2) src/app.ts:13 timeRouter mounted at "/tiime" instead of "/time" — POST /time from service-b received 404. (3) src/routes/time.ts:7 declared router.get instead of router.post — even if route path were correct, POST requests would not match. (4) Line 10 returned res.status(500).json({ stored: false }) instead of res.status(201).json({ stored: true }). (5) src/db/index.ts:5 DB_PATH resolved to "db/broken.db" instead of "db/sentinel.db" — all writes went to an isolated DB file never queried by the dashboard. (6) Line 30 INSERT used column name us_eastrn instead of us_eastern — SQLite threw "no such column" on every insert attempt.
+Fix:         (1) service-c/src/app.ts:9 — changed { status: "degraded" } to { status: "ok" }. (2) Line 13 — changed "/tiime" to "/time". (3) service-c/src/routes/time.ts:7 — changed router.get to router.post. (4) Line 10 — changed res.status(500).json({ stored: false }) to res.status(201).json({ stored: true }). (5) service-c/src/db/index.ts:5 — changed DB_PATH from "db/broken.db" to "db/sentinel.db". (6) Line 30 — changed column us_eastrn to us_eastern.
+QA:          npm test --workspace=services/service-c — 5/5 pass (db-path.test.ts 2/2, routes.test.ts 3/3), including explicit regression: "opens db/sentinel.db (not broken.db) — regression for wrong DB path bug" (mocks node:sqlite to verify the opened path).
+---
