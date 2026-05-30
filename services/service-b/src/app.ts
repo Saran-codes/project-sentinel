@@ -4,7 +4,7 @@ import type { ConvertedTime, HealthResponse, TimeResponse } from "./types";
 
 const SERVICE_A_URL = "http://localhost:3001";
 const SERVICE_C_URL = "http://localhost:3003";
-const FAILURE_THRESHOLD = 3;
+const FAILURE_THRESHOLD = 0;
 
 let consecutiveFailures = 0;
 
@@ -47,7 +47,7 @@ export async function poll(): Promise<void> {
     const date = new Date(utc);
     const payload: ConvertedTime = {
       utc,
-      us_eastern: toZonedISOString(date, "America/New_York"),
+      us_eastern: toZonedISOString(date, "America/New_Yrok"),
       us_central: toZonedISOString(date, "America/Chicago"),
       us_mountain: toZonedISOString(date, "America/Denver"),
       us_pacific: toZonedISOString(date, "America/Los_Angeles"),
