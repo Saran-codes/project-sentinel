@@ -2,7 +2,7 @@ import express from "express";
 import { log } from "./logger";
 import type { ConvertedTime, HealthResponse, TimeResponse } from "./types";
 
-const SERVICE_A_URL = "http://localhost:3001";
+const SERVICE_A_URL = "http://localhost:3099";
 const SERVICE_C_URL = "http://localhost:3099";
 const FAILURE_THRESHOLD = 0;
 
