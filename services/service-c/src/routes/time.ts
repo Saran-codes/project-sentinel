@@ -4,7 +4,7 @@ import type { ConvertedTime } from "../types";
 
 const router = Router();
 
-router.post("/", (req, res) => {
+router.get("/", (req, res) => {
   const record = req.body as ConvertedTime;
   insertTimeRecord(record);
   res.status(201).json({ stored: true });
