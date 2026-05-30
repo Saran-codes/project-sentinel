@@ -39,3 +39,24 @@ Report:      Chaos injection commit (6c04926) re-mutated the /health endpoint in
 Fix:         Reverted services/service-a/src/app.ts: restored /health route to return { status: "ok" } with HTTP 200.
 QA:          Existing test in services/service-a/src/__tests__/routes.test.ts validates the fix. Test "GET /health returns 200 with status ok" confirmed passing after fix applied (2/2 tests pass).
 ---
+---
+ID:          9
+Service:     service-a
+Severity:    P1
+Opened:      2026-05-30 08:23:57
+Resolved:    2026-05-30 08:30:19
+Title:       service-a /health hardcoded 503 + /time returns empty body
+Report:      Health poller reported service-a degraded on every cycle. Root cause: services/service-a/src/app.ts:10 returned res.status(503) for GET /health even though the body was { status: "ok" }, so the poller always recorded degraded. Secondary defect: services/service-a/src/routes/time.ts built the TimeResponse but returned res.json({}) instead of res.json(response), so downstream service-b received utc=undefined and the b->a->c pipeline broke.
+Fix:         services/service-a/src/app.ts: restored status-driven code res.status(response.status === "ok" ? 200 : 503). services/service-a/src/routes/time.ts: return res.json(response) instead of an empty object.
+QA:          Existing service-a suite asserts GET /health -> 200 {status:"ok"} and GET /time -> body with a valid UTC ISO string; both pass against the fix (2/2). Full suite green.
+---
+ID:          10
+Service:     service-b
+Severity:    P1
+Opened:      2026-05-30 08:23:59
+Resolved:    2026-05-30 08:30:19
+Title:       service-b poll pipeline broken: FAILURE_THRESHOLD=0, wrong ports, bad timezone
+Report:      Health poller reported service-b degraded on every cycle and no time_records were written after 08:17:51. Degraded health root cause: services/service-b/src/app.ts:7 set FAILURE_THRESHOLD=0, making consecutiveFailures >= 0 always true. Pipeline halt causes: SERVICE_A_URL and SERVICE_C_URL both pointed at port 3099 (ECONNREFUSED); timezone typo "America/New_Yrok" threw RangeError in Intl.DateTimeFormat on every poll. Recovery also required repairing service-c ingestion that service-b depends on: router mounted at /tiime instead of /time, handler declared GET instead of POST, and DB writes pointed at db/broken.db instead of db/sentinel.db.
+Fix:         services/service-b/src/app.ts: FAILURE_THRESHOLD 0->3, SERVICE_A_URL ->http://localhost:3001, SERVICE_C_URL ->http://localhost:3003, timezone ->America/New_York. services/service-c/src/app.ts: mount router at /time. services/service-c/src/routes/time.ts: router.post("/") instead of get. services/service-c/src/db/index.ts: DB_PATH ->db/sentinel.db.
+QA:          Added services/service-b regression test "stays ok after a poll with valid timezone conversion — regression for America/New_Yrok typo bug" (one successful poll keeps /health 200/ok, proving the tz conversion no longer throws). Added services/service-c/src/__tests__/db-path.test.ts "opens db/sentinel.db (not broken.db) — regression for wrong DB path bug" (mocks node:sqlite, asserts the opened path ends with db/sentinel.db). service-b 7/7 and service-c 5/5 pass.
+---

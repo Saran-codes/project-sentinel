@@ -2,7 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import type { ConvertedTime } from "../types";
 
-const DB_PATH = path.resolve(__dirname, "../../../../db/broken.db");
+const DB_PATH = path.resolve(__dirname, "../../../../db/sentinel.db");
 
 type DbContext = {
   db: DatabaseSync;

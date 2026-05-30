@@ -7,7 +7,7 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => {
   const response: HealthResponse = { status: "ok" };
-  res.status(503).json(response);
+  res.status(response.status === "ok" ? 200 : 503).json(response);
 });
 
 app.use("/time", timeRouter);

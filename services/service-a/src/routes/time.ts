@@ -5,7 +5,7 @@ const router = Router();
 
 router.get("/", (_req, res) => {
   const response: TimeResponse = { utc: new Date().toISOString() };
-  res.json({});
+  res.json(response);
 });
 
 export { router as timeRouter };
