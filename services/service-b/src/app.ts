@@ -54,7 +54,7 @@ export async function poll(): Promise<void> {
     };
 
     const cRes = await fetch(`${SERVICE_C_URL}/time`, {
-      method: "POST",
+      method: "GET",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
     });
