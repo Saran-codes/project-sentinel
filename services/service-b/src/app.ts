@@ -4,7 +4,7 @@ import type { ConvertedTime, HealthResponse, TimeResponse } from "./types";
 
 const SERVICE_A_URL = "http://localhost:3099";
 const SERVICE_C_URL = "http://localhost:3003";
-const FAILURE_THRESHOLD = 3;
+const FAILURE_THRESHOLD = 0;
 
 let consecutiveFailures = 0;
 
