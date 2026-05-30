@@ -56,7 +56,7 @@ export async function poll(): Promise<void> {
     const cRes = await fetch(`${SERVICE_C_URL}/time`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({}),
     });
     if (!cRes.ok) {
       throw new Error(`service-c responded ${cRes.status}`);
